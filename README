@@ -1,0 +1,35 @@
+# Overview
+
+This scraping module will be able to scrape the reviews and corresponding profiles off amazon. Loreal products are first identified on amazon, and only products with official loreal accounts will be included. The module will then collect information about the reviews for these products, as well as the reviewer profiles tied to each review.
+
+This project is meant for academic purposes in a form of a proof of concept. We do not intend to publish this in the public domain for other users.
+
+
+# Installation
+1) Download the project into your directory ```git clone xxxxxxxxx```
+2) Go into project directory ```cd amazonreviews/amazonreviews/```
+3) Create a conda environment ```conda create --name scrapevenv```
+then activate it using ```activate scrapevenv```
+4) Install environment ```conda env create -f environment.yml```. Alternatively, if using venv then ```pip install requirements.txt```
+
+# Usage
+### Product reviews
+1) Modify the file in ./data/scrape_urls.csv : fill in the  product url and total reviews seperated by a comma. e.g. ```https://www.amazon.com/LOreal-Paris-Visible-Line-Minimizing-Tone-Enhancing/product-reviews/B0000531SW/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber=,365```
+2) run ```python main.py -m reviews```
+
+Raw reviews will be stored in ./output/raw in batches of default=15 pages (Do in batches so the proxies wont die halfway)
+Final product combined reviews stored in ./output/products
+
+
+### Profiles
+1) Modify the url file in ./data/scrape_profiles.csv : fill in the links of the profiles e.g. ```https://www.amazon.com/gp/profile/amzn1.account.AEBGB5TXQVZDADM6NVF3PUGZJZQQ```
+2) run ```python main.py -m profiles```
+
+Raw reviews will be stored in ./output/profiles in batches of default=200 profiles (Do in batches so the proxies wont die halfway)
+Final product combined reviews stored in ./output/customers
+
+Outstanding reviews (Failed to scrape) will be stored in ./logs/outstanding_items.csv as logs.
+The script will then rescrape the items in this log until it succeeds (default tries=2). Adjust this paramter using ```-nr``` when running main.py
+
+```TODO: Add more usages/help on arguments/configuration```
+

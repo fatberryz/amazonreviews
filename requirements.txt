@@ -1,0 +1,6 @@
+pandas==0.24.2
+js2xml==0.4.0
+itemadapter==0.1.0
+random_user_agent==1.0.1
+Scrapy==2.3.0
+scrapy_rotating_proxies==0.6.2

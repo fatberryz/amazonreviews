@@ -1,0 +1,35 @@
+name: scrapevenv
+channels:
+- conda-forge
+- defaults
+dependencies:
+- brotlipy=0.7.0=py38h1e8a9f7_1000
+- cffi=1.14.1=py38hba49e27_0
+- chardet=3.0.4=py38h32f6830_1006
+- cryptography=3.1=py38hba49e27_0
+- docopt=0.6.2=py_1
+- idna=2.10=pyh9f0ad1d_0
+- pipreqs=0.4.10=py_0
+- pycparser=2.20=pyh9f0ad1d_2
+- pyopenssl=19.1.0=py_1
+- pysocks=1.7.1=py38h32f6830_1
+- python_abi=3.8=1_cp38
+- requests=2.24.0=pyh9f0ad1d_0
+- six=1.15.0=pyh9f0ad1d_0
+- urllib3=1.25.10=py_0
+- win_inet_pton=1.1.0=py38_0
+- yarg=0.1.9=py_1
+- ca-certificates=2020.7.22=0
+- certifi=2020.6.20=py38_0
+- openssl=1.1.1g=he774522_1
+- pip=20.2.2=py38_0
+- python=3.8.5=h5fd99cc_1
+- setuptools=49.6.0=py38_0
+- sqlite=3.33.0=h2a8f88b_0
+- vc=14.1=h0510ff6_4
+- vs2015_runtime=14.16.27012=hf0eaf9b_3
+- wheel=0.35.1=py_0
+- wincertstore=0.2=py38_0
+- zlib=1.2.11=h62dcd97_4
+prefix: C:\Users\Admin\Anaconda3\envs\scrapevenv
+
