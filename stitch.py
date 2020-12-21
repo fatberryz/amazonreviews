@@ -72,5 +72,5 @@ def combine_products(output_dir, final_dir):
         unique_asin_df[column] = np.nan
 
     extract_non_nulls(unique_asin_df,total_df,columns)
-    unique_asin_df[unique_asin_df.asin != 'asin'].to_csv("{final_dir}/consolidated_products.csv".format(final_dir=final_dir), index=False)
+    unique_asin_df[unique_asin_df.asin != 'asin'].to_csv("{final_dir}/consolidated_product_info.csv".format(final_dir=final_dir), index=False)
 
