@@ -4,3 +4,5 @@ itemadapter==0.1.0
 random_user_agent==1.0.1
 Scrapy==2.3.0
 scrapy_rotating_proxies==0.6.2
+configargparse==1.2.3
+pyYaml==5.3.1

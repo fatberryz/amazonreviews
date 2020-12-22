@@ -1,4 +1,4 @@
-import argparse
+import configargparse
 from subprocess import call
 import pandas as pd
 from datetime import datetime
@@ -156,26 +156,31 @@ def get_products():
 
 def parse_args():
     # Make parser object
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    # p = argparse.ArgumentParser(description=__doc__,
+    #                             formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # TODO: read arguments from configuration file instead
     # TODO: Save logs/cmd line outputs in a file
     # TODO: Clean up the command functions (merge)
-    p.add_argument("-m", "--scraping_mode", default="profiles",
-                   help="Specify mode of scraper ['reviews','profiles','products']")
-    p.add_argument("-f", "--file_path", default="./data/scrape_urls.csv",
+    p = configargparse.ArgumentParser(default_config_files=['./config.yml'],config_file_parser_class=configargparse.YAMLConfigFileParser)
+
+    p.add_argument("-m", "--scraping_mode",
+                   help="Specify mode of scraper ['reviews','profiles', 'products']")
+    p.add_argument("-f", "--file_path",
                    help="Csv file that contains the review urls and no. reviews")
-    p.add_argument("-n", "--freq", type=int, default=15,
+    p.add_argument("-n", "--freq", type=int,
                    help="Number of pages to crawl before re-running the script to refresh proxies.")
-    p.add_argument("-o", "--output_dir", default="./output/raw",
+    p.add_argument("-o", "--output_dir",
                    help="Output directory of scraped reviews")
-    p.add_argument("-lo", "--log_output", default="./output/logs/outstanding_items.csv",
+    p.add_argument("-lo", "--log_output",
                    help="Output directory of log (Outstanding urls)")
-    p.add_argument("-fo", "--final_output", default="./output/products",
+    p.add_argument("-fo", "--final_output",
                    help="Output directory of final scraped products (After stitching)")
-    p.add_argument("-nr", "--num_retry", default=2,
+    p.add_argument("-nr", "--num_retry",
                    help="Number of retries of scraping outstanding items")
+
+    # opt = p.parse_args()
+    # print(opt)
 
     return p.parse_args()
 
