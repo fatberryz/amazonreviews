@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
 import scrapy
+from amazonreviews.items import AmazonProductsItem
 from scrapy import signals
 import re
 import pandas as pd
@@ -73,6 +74,8 @@ class AmazonReviewsSpider(scrapy.Spider):
 
     # Defining a Scrapy parser
     def parse(self, response):
+        items = AmazonProductsItem()
+
         description = ''
         price = ''
         rating = ''
@@ -101,11 +104,13 @@ class AmazonReviewsSpider(scrapy.Spider):
             retries += 1
             time.sleep(15)
 
-            # Combining the results
-        yield {
-            'asin': response.request.url.split('/')[4],
-                'description': description,
-                'price': price,
-                'rating': rating,
-                'availability': availability
-                }
+            ASIN = response.request.url.split('/')[4]
+
+        # Combining the results
+        items["ASIN"] = ASIN
+        items["description"] = description
+        items["price"] = price
+        items["rating"] = rating
+        items["availability"] = availability
+
+        yield items

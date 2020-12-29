@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
 import scrapy
+from amazonreviews.items import AmazonReviewsItem
 from scrapy import signals
 import pandas as pd
 
@@ -62,6 +63,8 @@ class AmazonReviewsSpider(scrapy.Spider):
 
     # Defining a Scrapy parser
     def parse(self, response):
+        items = AmazonReviewsItem()
+
         data = response.css('#cm_cr-review_list')
         # Collecting user reviews
         print(response.request.url)
@@ -69,21 +72,36 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         # Combining the results
         for review in reviews:
-            yield {'stars': ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
-                    if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != ''
-                    else ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip(),
-                   'profile_name': ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip(),
-                   'profile_link': ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip(),
-                   'profile_image': ''.join(
-                       review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip(),
-                   'title': ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip(),
-                   'date': ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip(),
-                   'style': ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip(),
-                   'verified': ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip(),
-                   'comment': ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip(),
-                   'voting': ''.join(
-                       review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip(),
-                   'review_images': len(
-                       review.xpath('.//div[@class="review-image-tile-section"]//img')),
-                   'ASIN': response.request.url.split('/')[5]
-                   }
+            if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
+                stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
+            else: 
+                stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
+
+            profile_name =  ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()
+            profile_link = ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip()
+            profile_image =  ''.join(review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip()
+            title = ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip()
+            date =  ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip()
+            style =  ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
+            verified = ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip()
+            comment =  ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
+            voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
+            review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
+            ASIN = response.request.url.split('/')[5]
+
+            items["stars"] = stars
+            items["profile_name"] = profile_name
+            items["profile_link"] = profile_link
+            items["profile_image"] = profile_image
+            items["title"] = title
+            items["date"] = date
+            items["style"] = style
+            items["verified"] = verified
+            items["comment"] = comment
+            items["voting"] = voting
+            items["review_images"] = review_images
+            items["ASIN"] = ASIN
+
+            yield items
+
+

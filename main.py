@@ -155,13 +155,9 @@ def get_products():
         call(cmd, shell=True)
 
 def parse_args():
-    # Make parser object
-    # p = argparse.ArgumentParser(description=__doc__,
-    #                             formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    # TODO: read arguments from configuration file instead
     # TODO: Save logs/cmd line outputs in a file
     # TODO: Clean up the command functions (merge)
+    # Make parser object
     p = configargparse.ArgumentParser(default_config_files=['./config.yml'],config_file_parser_class=configargparse.YAMLConfigFileParser)
 
     p.add_argument("-m", "--scraping_mode",
@@ -178,9 +174,6 @@ def parse_args():
                    help="Output directory of final scraped products (After stitching)")
     p.add_argument("-nr", "--num_retry",
                    help="Number of retries of scraping outstanding items")
-
-    # opt = p.parse_args()
-    # print(opt)
 
     return p.parse_args()
 

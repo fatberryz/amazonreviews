@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
 import scrapy
+from amazonreviews.items import AmazonProfilesItem
 from scrapy import signals
 import re
 import pandas as pd
@@ -22,12 +23,12 @@ class AmazonReviewsSpider(scrapy.Spider):
         config = kwargs['config'].split(',')
         self.log_output = config[1]
         mode = config[4]
+        start_urls = []
+
         if mode == "main":
             profile_df_path = config[0]
             start_row = int(config[2])
             end_row = int(config[3])
-
-            start_urls = []
             profiles_df = pd.read_csv(profile_df_path)
 
             for profile_url in profiles_df['url'].iloc[start_row:end_row]:
@@ -72,22 +73,34 @@ class AmazonReviewsSpider(scrapy.Spider):
 
     # Defining a Scrapy parser
     def parse(self, response):
+        items = AmazonProfilesItem()
+
         if response.status == 404:
-            yield {
-                'json_data': '',
-                "acc_num": response.url.split('amzn1.account.')[-1],
-                "name": '',
-                "occupation": '',
-                "location": '',
-                "description": '',
-                "badges": '',
-                'ranking': ''
-            }
+            json_data = ''
+            acc_num = response.url.split('amzn1.account.')[-1]
+            name = ''
+            occupation = ''
+            location = ''
+            description = ''
+            badges = ''
+            ranking = ''
+
+            items["json_data"] = json_data
+            items["acc_num"] = acc_num
+            items["name"] = name
+            items["occupation"] = occupation
+            items["location"] = location
+            items["description"] = description
+            items["badges"] = badges
+            items["ranking"] = ranking
+
+            yield items
         try:
             account_num = response.url.split('amzn1.account.')[-1]
             pattern = r"window.CustomerProfileRootProps = {([^}]*)}"
             token_pattern = r'"token":"((\\"|[^"])*)"'
-            reviews = (response.xpath("//script//text()").re(pattern)[0])
+            print("xxxx", response)
+            reviews = response.xpath("//script//text()").re(pattern)[0]
             token = re.search(token_pattern, reviews).group(1)
 
             summary = response.xpath('//script[contains(., "CustomerProfileRootProps")]//text()').extract_first()
@@ -113,31 +126,51 @@ class AmazonReviewsSpider(scrapy.Spider):
         except ValueError as e:
             if str(e) == "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters":
                 # This exception occurs when we cant find any reviews on the profile (maybe deleted)
-                yield {
-                    'json_data': '',
-                    "acc_num": response.url.split('amzn1.account.')[-1],
-                    "name": '',
-                    "occupation": '',
-                    "location": '',
-                    "description": '',
-                    "badges": '',
-                    'ranking': ''
-                }
+                json_data = ''
+                acc_num = response.url.split('amzn1.account.')[-1]
+                name = ''
+                occupation = ''
+                location = ''
+                description = ''
+                badges = ''
+                ranking = ''
+
+                items["json_data"] = json_data
+                items["acc_num"] = acc_num
+                items["name"] = name
+                items["occupation"] = occupation
+                items["location"] = location
+                items["description"] = description
+                items["badges"] = badges
+                items["ranking"] = ranking
+
+                yield items
             else:
                 pass
 
     def parse_profile(self, response):
+        items = AmazonProfilesItem()
         try:
             data = json.loads(response.body)
-            yield {
-                'json_data': data,
-                "acc_num": response.meta['acc_num'],
-                "name": response.meta['name'],
-                "occupation": response.meta['occupation'],
-                "location": response.meta['location'],
-                "description": response.meta['description'],
-                "badges": response.meta['badges'],
-                'ranking': response.meta['ranking']
-            }
+            json_data =  data
+            acc_num = response.meta['acc_num']
+            name = response.meta['name']
+            occupation = response.meta['occupation']
+            location = response.meta['location']
+            description = response.meta['description']
+            badges = response.meta['badges']
+            ranking = response.meta['ranking']
+
+            items["json_data"] = json_data
+            items["acc_num"] = acc_num
+            items["name"] = name
+            items["occupation"] = occupation
+            items["location"] = location
+            items["description"] = description
+            items["badges"] = badges
+            items["ranking"] = ranking
+
+            yield items
+
         except:
             pass
