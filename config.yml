@@ -1,5 +1,5 @@
 scraping_mode: profiles
-file_path: ./data/scrape_urls.csv
+file_path: ./data
 freq: 15
 output_dir: ./output/raw
 log_output: profiles

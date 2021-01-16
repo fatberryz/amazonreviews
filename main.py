@@ -14,6 +14,7 @@ def get_reviews():
     """
     path = args.file_path
     file_path = path + "/scrape_reviews.csv"
+    
     # freq = args.freq
     output_dir = args.output_dir
     log_output = args.log_output
@@ -23,13 +24,13 @@ def get_reviews():
         curr_url = row['url']
         curr_asin = curr_url.split('/')[4]
         print("Starting scraping for url: {}".format(curr_url))
-        
+
         output_path = output_dir + "/reviews_{}.csv".format(curr_asin)
         #print(output_path)
-        
+
         cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, curr_url, log_output, "main")
         call(cmd, shell=True)
-        
+
         # total_pages = int(row['total_reviews']//10) + \
         #     1  # 1 page has 10 reviews
         # for start_page in range(1, total_pages, freq):
@@ -193,7 +194,7 @@ def create_urls():
 def get_profile_urls():
     """
     This function creates the amazon urls for scraping profiles from the scraped reviews that are stored
-    in the output/raw folder. 
+    in the output/raw folder.
     """
     reviews_file_path = args.output_dir
     path = args.file_path
@@ -211,17 +212,17 @@ def get_profile_urls():
     # remove duplicate profile links
     distinct_profile_links = (set(profile_links))
 
-    # generate profile urls to scrape 
+    # generate profile urls to scrape
     profile_urls = [f"https://www.amazon.com{profile_link}" for profile_link in distinct_profile_links]
     profile_df = pd.DataFrame(profile_urls, columns=["url"])
-    profile_df.to_csv(profiles_path, index=False)  
+    profile_df.to_csv(profiles_path, index=False)
 
 
 def parse_args():
     # TODO: Save logs/cmd line outputs in a file
     # TODO: Clean up the command functions (merge)
     """
-    This function creates a parser object that takes in arguments from config.yml file. These arguments can be 
+    This function creates a parser object that takes in arguments from config.yml file. These arguments can be
     overwritten using the add arguments function when calling the module from the command line.
     """
     p = configargparse.ArgumentParser(default_config_files=[
@@ -252,7 +253,7 @@ if __name__ == "__main__":
     # create urls to scrape reviews and products from a csv containing product ASINs
     create_urls()
 
-    # Scrape reviews 
+    # Scrape reviews
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
     get_reviews()
     # get_outstanding_reviews()
@@ -274,5 +275,3 @@ if __name__ == "__main__":
 
     # # TODO: Add arguments/config to allow changing of settings.py settings
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions
-
-
