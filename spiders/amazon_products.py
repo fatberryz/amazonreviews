@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
+import json
+import re
+import random
+import time
+
+import js2xml
+import pandas as pd
 import scrapy
 from amazonreviews.items import AmazonProductsItem
-from scrapy import signals
-import re
-import pandas as pd
-import json
-import js2xml
 from js2xml.utils.vars import get_vars
+from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import SoftwareName, OperatingSystem
-import time
+from scrapy import signals
 
 
 # Creating a new class to implement Spider
@@ -99,10 +101,11 @@ class AmazonReviewsSpider(scrapy.Spider):
 
             if availability == '':
                 availability = ''.join(response.xpath('//div[@id="availability"]//span[@class="a-size-medium a-color-price"]//text()').extract()).strip()
-
-            print("Current retries at {}/3. Will pause for 15 seconds before scrapping.".format(retries))
+            
+            wait_time = random.randint(4, 8)
+            print(f"Current retries at {retries}/3. Will pause for {wait_time} seconds before scrapping.")
             retries += 1
-            time.sleep(15)
+            time.sleep(wait_time)
 
             ASIN = response.request.url.split('/')[4]
 

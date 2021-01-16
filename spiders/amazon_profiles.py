@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
+import json
+import re
+
+import js2xml
+import pandas as pd
 import scrapy
 from amazonreviews.items import AmazonProfilesItem
-from scrapy import signals
-import re
-import pandas as pd
-import json
-import js2xml
 from js2xml.utils.vars import get_vars
+from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import SoftwareName, OperatingSystem
+from scrapy import signals
 
 
 # Creating a new class to implement Spider
@@ -77,7 +78,7 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         if response.status == 404:
             json_data = ''
-            acc_num = response.url.split('amzn1.account.')[-1]
+            acc_num = response.url.split('amzn1.account.')[-1].split("/")[0]
             name = ''
             occupation = ''
             location = ''
@@ -96,10 +97,14 @@ class AmazonReviewsSpider(scrapy.Spider):
 
             yield items
         try:
-            account_num = response.url.split('amzn1.account.')[-1]
+            account_num = response.url.split('amzn1.account.')[-1].split("/")[0]
+            print("account_num", account_num)
             pattern = r"window.CustomerProfileRootProps = {([^}]*)}"
+            print("pattern", pattern)
             token_pattern = r'"token":"((\\"|[^"])*)"'
-            print("xxxx", response)
+            print("response", response)
+            print("response xpath script text", response.xpath("//script//text()"))
+            print("response xpath", response.xpath("//script//text()").re(pattern))
             reviews = response.xpath("//script//text()").re(pattern)[0]
             token = re.search(token_pattern, reviews).group(1)
 
@@ -127,7 +132,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             if str(e) == "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters":
                 # This exception occurs when we cant find any reviews on the profile (maybe deleted)
                 json_data = ''
-                acc_num = response.url.split('amzn1.account.')[-1]
+                acc_num = response.url.split('amzn1.account.')[-1].split("/")[0]
                 name = ''
                 occupation = ''
                 location = ''
@@ -152,7 +157,7 @@ class AmazonReviewsSpider(scrapy.Spider):
         items = AmazonProfilesItem()
         try:
             data = json.loads(response.body)
-            json_data =  data
+            json_data = data
             acc_num = response.meta['acc_num']
             name = response.meta['name']
             occupation = response.meta['occupation']
