@@ -1,7 +1,6 @@
-scraping_mode: profiles
 file_path: ./data
 freq: 15
 output_dir: ./output/raw
-log_output: profiles
-final_output: ./output/logs/outstanding_items.csv
+log_output: ./output/logs/outstanding_items.csv
+final_output: ./output/products
 num_retry: 2
