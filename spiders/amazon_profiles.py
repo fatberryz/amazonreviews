@@ -108,9 +108,10 @@ class AmazonReviewsSpider(scrapy.Spider):
             reviews = response.xpath("//script//text()").re(pattern)[0]
             token = re.search(token_pattern, reviews).group(1)
 
-            summary = response.xpath('//script[contains(., "CustomerProfileRootProps")]//text()').extract_first()
+            summary = response.xpath('//script[contains(., " ")]//text()').extract_first()
             summary = get_vars(js2xml.parse(summary))
 
+            # helpful votes etc.
             meta = {
                 "name": summary['window.CustomerProfileRootProps']['nameHeaderData']['name'],
                 "occupation": summary['window.CustomerProfileRootProps']['bioData']['occupation'],

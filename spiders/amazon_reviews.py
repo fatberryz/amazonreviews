@@ -26,7 +26,7 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         if mode == "outstanding":
             outstanding_df = pd.read_csv(self.log_output)
-            outstanding_df = outstanding_df[outstanding_df['scraped'].astype(int) == 0]
+            outstanding_df = outstanding_df[outstanding_df['scraped'] == 0]
             for raw_url in outstanding_df['url']:
                 format_url = raw_url.replace("start_requests/item_scraped_count/", "")
                 start_urls.append(format_url)
@@ -62,7 +62,9 @@ class AmazonReviewsSpider(scrapy.Spider):
         with open(self.log_output, "a") as log_file:
             for url in self.start_urls:
                 if prefix + url in stats and stats[prefix + url] != 10:
-                    log_file.write(prefix+url + "," + str(stats[prefix + url]) + '0' + '\n')
+                    # Sample scrapy stat for full 500 review scrape:
+                    # 'start_requests/item_scraped_count/https://www.amazon.com/product-reviews/B004BCXAM8/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews': 5000,
+                    log_file.write(prefix+url + "," + str(stats[prefix + url]) + ',0' + '\n') # url + num_items scraped + scraped [0 or 1]
                 if prefix + url not in stats:
                     log_file.write(prefix + url + ",0" + ",0" + '\n')
 
@@ -72,7 +74,7 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         data = response.css('#cm_cr-review_list')
         # Collecting user reviews
-        print(response.request.url)
+        print("Current URL being scraped: \n\t", response.request.url)
         reviews = data.css('div[data-hook="review"]')
 
         # Combining the results
@@ -111,7 +113,7 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         # next page url
         next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
-        #print("xxxx", str(next_page_partial_url))
+        # print("xxxx", str(next_page_partial_url))
 
         if next_page_partial_url:
             # remove name of product in front
@@ -120,8 +122,11 @@ class AmazonReviewsSpider(scrapy.Spider):
             next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
 
             # continue following the next page link as long as there is content to scrape in the next page
-            if next_page_url is not None:
-                #print("XXXX next page url", next_page_url)
-                yield scrapy.Request(next_page_url, callback=self.parse)
-                # introduce random delay between requests to reduce risk of being blocked
-                time.sleep(random.randint(4, 8))
+            # if next_page_url is not None:
+            # print("XXXX next page url", next_page_url)
+            yield scrapy.Request(next_page_url, callback=self.parse)
+            # introduce random delay between requests to reduce risk of being blocked
+            time.sleep(random.randint(4, 8))
+
+        else:
+            print(f"No more next review page button. Stop scraping for current product review")

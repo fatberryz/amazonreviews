@@ -22,10 +22,10 @@ def get_reviews():
     for ind, row in url_df.iterrows():
         curr_url = row['url']
         curr_asin = curr_url.split('/')[4]
-        print("Starting scraping for url: {}".format(curr_url))
+        # print("Starting scraping for url: {}".format(curr_url))
         
         output_path = output_dir + "/reviews_{}.csv".format(curr_asin)
-        #print(output_path)
+        # print(output_path)
         
         cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, curr_url, log_output, "main")
         call(cmd, shell=True)
@@ -55,17 +55,19 @@ def get_outstanding_reviews():
         print("Retrying outstanding: {iter}".format(iter=cnt))
         # Scrape remaining urls which failed previously
         output_path = output_dir + "/reviews_outstanding.csv"
+        #print(output_path)
         cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, "NA", log_output, "outstanding")
         call(cmd, shell=True)
         # scrape_cmd(output_path, "NA", "NA", "NA", log_output, "outstanding")
 
         # Update those urls which are scraped or not
-        updated_df = pd.read_csv(log_output, names=["url", "num_items", "scraped"])
+        updated_df = pd.read_csv(log_output)
         outstanding_df = updated_df.groupby('url').filter(lambda x: len(x) > 1)
         outstanding_df = outstanding_df.drop_duplicates('url', keep='last')
         cleared_df = updated_df.groupby('url').filter(lambda x: len(x) == 1)
         cleared_df['scraped'] = 1
         updated_df = pd.concat([cleared_df, outstanding_df])
+
         updated_df.to_csv(log_output, index=False)
 
 
@@ -254,9 +256,9 @@ if __name__ == "__main__":
 
     # Scrape reviews 
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_reviews()
-    # get_outstanding_reviews()
-    # combine_reviews(args.output_dir, args.final_output)
+    #get_reviews()
+    #get_outstanding_reviews()
+    combine_reviews(args.output_dir, args.final_output)
 
     # Scrape products
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
