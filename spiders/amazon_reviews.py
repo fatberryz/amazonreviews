@@ -5,9 +5,15 @@ import time
 
 import pandas as pd
 import scrapy
-from amazonreviews.items import AmazonReviewsItem
-from scrapy import signals
 
+import platform
+
+if platform.system() == "Darwin":
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from items import AmazonReviewsItem
+from scrapy import signals
 
 # Creating a new class to implement Spider
 class AmazonReviewsSpider(scrapy.Spider):
@@ -72,14 +78,14 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         data = response.css('#cm_cr-review_list')
         # Collecting user reviews
-        print(response.request.url)
+        print("Current URL being scraped: \n\t", response.request.url)
         reviews = data.css('div[data-hook="review"]')
 
         # Combining the results
         for review in reviews:
             if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
                 stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
-            else: 
+            else:
                 stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
 
             profile_name =  ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()
@@ -111,7 +117,7 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         # next page url
         next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
-        #print("xxxx", str(next_page_partial_url))
+        # print("xxxx", str(next_page_partial_url))
 
         if next_page_partial_url:
             # remove name of product in front
@@ -120,8 +126,11 @@ class AmazonReviewsSpider(scrapy.Spider):
             next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
 
             # continue following the next page link as long as there is content to scrape in the next page
-            if next_page_url is not None:
-                #print("XXXX next page url", next_page_url)
-                yield scrapy.Request(next_page_url, callback=self.parse)
-                # introduce random delay between requests to reduce risk of being blocked
-                time.sleep(random.randint(4, 8))
+            # if next_page_url is not None:
+            # print("XXXX next page url", next_page_url)
+            yield scrapy.Request(next_page_url, callback=self.parse)
+            # introduce random delay between requests to reduce risk of being blocked
+            time.sleep(random.randint(4, 8))
+
+        else:
+            print(f"No more next review page button. Stop scraping for current product review")
