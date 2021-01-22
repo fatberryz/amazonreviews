@@ -5,6 +5,12 @@ import time
 
 import pandas as pd
 import scrapy
+import platform
+
+if platform.system() == "Darwin":
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
 from amazonreviews.items import AmazonReviewsItem
 from scrapy import signals
 
