@@ -6,7 +6,38 @@
 import scrapy
 
 
-class AmazonreviewsItem(scrapy.Item):
+class AmazonReviewsItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    stars = scrapy.Field()
+    profile_name = scrapy.Field()
+    profile_link = scrapy.Field()
+    profile_image = scrapy.Field()
+    title = scrapy.Field()
+    date = scrapy.Field()
+    style = scrapy.Field()
+    verified = scrapy.Field()
+    comment = scrapy.Field()
+    voting = scrapy.Field()
+    review_images = scrapy.Field()
+    ASIN = scrapy.Field()
+
+
+class AmazonProfilesItem(scrapy.Item):
+    # define the fields for your item here like:
+    json_data = scrapy.Field()
+    acc_num = scrapy.Field()
+    name = scrapy.Field()
+    occupation = scrapy.Field()
+    location = scrapy.Field()
+    description = scrapy.Field()
+    badges = scrapy.Field()
+    ranking = scrapy.Field()
+
+
+class AmazonProductsItem(scrapy.Item):
+    # define the fields for your item here like:
+    ASIN = scrapy.Field()
+    description = scrapy.Field()
+    price = scrapy.Field()
+    rating = scrapy.Field()
+    availability = scrapy.Field()

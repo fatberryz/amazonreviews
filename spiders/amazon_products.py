@@ -1,15 +1,25 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
-import scrapy
-from scrapy import signals
-import re
-import pandas as pd
 import json
-import js2xml
-from js2xml.utils.vars import get_vars
-from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import SoftwareName, OperatingSystem
+import platform
+import random
+import re
 import time
+
+import pandas as pd
+
+import js2xml
+import scrapy
+from amazonreviews.items import AmazonProductsItem
+from js2xml.utils.vars import get_vars
+from random_user_agent.params import OperatingSystem, SoftwareName
+from random_user_agent.user_agent import UserAgent
+from scrapy import signals
+
+# To allow Mac to load spider module from parent folder
+if platform.system() == "Darwin":
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # Creating a new class to implement Spider
@@ -73,6 +83,8 @@ class AmazonReviewsSpider(scrapy.Spider):
 
     # Defining a Scrapy parser
     def parse(self, response):
+        items = AmazonProductsItem()
+
         description = ''
         price = ''
         rating = ''
@@ -96,16 +108,19 @@ class AmazonReviewsSpider(scrapy.Spider):
 
             if availability == '':
                 availability = ''.join(response.xpath('//div[@id="availability"]//span[@class="a-size-medium a-color-price"]//text()').extract()).strip()
-
-            print("Current retries at {}/3. Will pause for 15 seconds before scrapping.".format(retries))
+            
+            wait_time = random.randint(4, 8)
+            print(f"Current retries at {retries}/3. Will pause for {wait_time} seconds before scrapping.")
             retries += 1
-            time.sleep(15)
+            time.sleep(wait_time)
 
-            # Combining the results
-        yield {
-            'asin': response.request.url.split('/')[4],
-                'description': description,
-                'price': price,
-                'rating': rating,
-                'availability': availability
-                }
+            ASIN = response.request.url.split('/')[4]
+
+        # Combining the results
+        items["ASIN"] = ASIN
+        items["description"] = description
+        items["price"] = price
+        items["rating"] = rating
+        items["availability"] = availability
+
+        yield items
