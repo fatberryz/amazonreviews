@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
+import platform
 import random
 import time
 
 import pandas as pd
-import scrapy
-import platform
 
+import scrapy
+from amazonreviews.items import AmazonReviewsItem
+from scrapy import signals
+
+# To allow Mac to load spider module from parent folder
 if platform.system() == "Darwin":
     import os, sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
-from amazonreviews.items import AmazonReviewsItem
-from scrapy import signals
-
 
 # Creating a new class to implement Spider
 class AmazonReviewsSpider(scrapy.Spider):
@@ -28,7 +29,6 @@ class AmazonReviewsSpider(scrapy.Spider):
         self.log_output = config[1]
         mode = config[2]
         start_urls = []
-        # print("config, xxxxx", config)
 
         if mode == "outstanding":
             outstanding_df = pd.read_csv(self.log_output)
@@ -40,11 +40,6 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         if mode == "main":
             url_name = config[0]
-            # start_page = int(config[1])
-            # end_page = int(config[2])
-            # if len(url_name) > 0:
-            #     for i in range(start_page, end_page):
-            #         start_urls.append(url_name + str(i))
             start_urls.append(url_name)
             self.start_urls = start_urls
         self.logger.info(self.start_urls)
@@ -119,7 +114,6 @@ class AmazonReviewsSpider(scrapy.Spider):
 
         # next page url
         next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
-        # print("xxxx", str(next_page_partial_url))
 
         if next_page_partial_url:
             # remove name of product in front
@@ -128,8 +122,6 @@ class AmazonReviewsSpider(scrapy.Spider):
             next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
 
             # continue following the next page link as long as there is content to scrape in the next page
-            # if next_page_url is not None:
-            # print("XXXX next page url", next_page_url)
             yield scrapy.Request(next_page_url, callback=self.parse)
             # introduce random delay between requests to reduce risk of being blocked
             time.sleep(random.randint(4, 8))

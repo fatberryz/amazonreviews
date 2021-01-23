@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
 import json
-import re
+import platform
 import random
+import re
 import time
 
-import js2xml
 import pandas as pd
+
+import js2xml
 import scrapy
 from amazonreviews.items import AmazonProductsItem
 from js2xml.utils.vars import get_vars
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
 from scrapy import signals
+
+# To allow Mac to load spider module from parent folder
+if platform.system() == "Darwin":
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # Creating a new class to implement Spider
