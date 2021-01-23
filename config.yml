@@ -1,6 +1,6 @@
 file_path: ./data
 freq: 15
 output_dir: ./output/raw
-log_output: ./output/logs/outstanding_reviews.csv
-final_output: ./output/products
+log_output: ./output/logs/
+final_output: ./output/consolidated
 num_retry: 2

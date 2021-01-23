@@ -3,8 +3,9 @@ import os
 from datetime import datetime
 from subprocess import call
 
-import configargparse
 import pandas as pd
+
+import configargparse
 from stitch import combine_products, combine_profiles, combine_reviews
 
 
@@ -12,41 +13,29 @@ def get_reviews():
     """
     This function reads the scrape_reviews.csv and runs the amazon_reviews spider in batches of product url and pages.
     """
-    path = args.file_path
-    file_path = path + "/scrape_reviews.csv"
-    # freq = args.freq
-    output_dir = args.output_dir
-    log_output = args.log_output
+    input_data_path = args.file_path
+    file_path = input_data_path + "/scrape_reviews.csv"
+    output_dir = args.output_dir + "/reviews"
+    log_output = args.log_output + 'outstanding_reviews.csv'
 
     url_df = pd.read_csv(file_path)
     for ind, row in url_df.iterrows():
         curr_url = row['url']
         curr_asin = curr_url.split('/')[4]
-        # print("Starting scraping for url: {}".format(curr_url))
         
         output_path = output_dir + "/reviews_{}.csv".format(curr_asin)
-        # print(output_path)
-        
+
         cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, curr_url, log_output, "main")
         call(cmd, shell=True)
         
-        # total_pages = int(row['total_reviews']//10) + \
-        #     1  # 1 page has 10 reviews
-        # for start_page in range(1, total_pages, freq):
-        #     end_page = min(start_page + freq + 1, total_pages + 1)
-        #     output_path = output_dir + \
-        #         "/reviews_{}_{}-{}.csv".format(curr_asin, start_page, end_page)
-        #     scrape_cmd(output_path, curr_url, start_page,
-        #                end_page, log_output, "main")
-
 
 def get_outstanding_reviews():
     """
     Retries crawling the outstanding reviews that were unable to be retrieved in get_reviews. Updates the outstanding
     logs after every try.
     """
-    log_output = args.log_output
-    output_dir = args.output_dir
+    log_output = args.log_output + "outstanding_reviews.csv"
+    output_dir = args.output_dir + "/reviews"
     num_retry = int(args.num_retry)
 
     cnt = 0
@@ -55,12 +44,11 @@ def get_outstanding_reviews():
         print("Retrying outstanding: {iter}".format(iter=cnt))
         # Scrape remaining urls which failed previously
         output_path = output_dir + "/reviews_outstanding.csv"
-        #print(output_path)
+
         cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, "NA", log_output, "outstanding")
         call(cmd, shell=True)
-        # scrape_cmd(output_path, "NA", "NA", "NA", log_output, "outstanding")
 
-        # Update those urls which are scraped or not
+        # Update those urls which are scraped or not (0 or 1 in scraped column)
         updated_df = pd.read_csv(log_output)
         outstanding_df = updated_df.groupby('url').filter(lambda x: len(x) > 1)
         outstanding_df = outstanding_df.drop_duplicates('url', keep='last')
@@ -76,9 +64,8 @@ def get_outstanding_profiles():
     Retries crawling the outstanding profiles that were unable to be retrieved in get_profiles. Updates the outstanding
     logs after every try.
     """
-    # TODO: Include the paths in a config file/parse as arguments
-    log_output = './output/logs/outstanding_profiles.csv'
-    output_dir = './output/profiles'
+    log_output = args.log_output + "outstanding_profiles.csv"
+    output_dir = args.output_dir + "/profiles"
     num_retry = int(args.num_retry)
 
     cnt = 0
@@ -87,9 +74,11 @@ def get_outstanding_profiles():
         print("Retrying outstanding: {iter}".format(iter=cnt))
         # Scrape remaining profiles which failed previously
         output_path = output_dir + "/profiles_outstanding.csv"
+
         cmd = 'scrapy runspider spiders/amazon_profiles.py -o {out_path} -a config="_,{log_output},_,_,outstanding"' \
             .format(out_path=output_path, log_output=log_output)
         call(cmd, shell=True)
+
         # Update those urls which are scraped or not
         updated_df = pd.read_csv(log_output)
         outstanding_df = updated_df.groupby('url').filter(lambda x: len(x) > 1)
@@ -106,9 +95,8 @@ def get_outstanding_products():
     Retries crawling the outstanding products that were unable to be retrieved in get_products. Updates the outstanding
     logs after every try.
     """
-    # TODO: Include the paths in a config file/parse as arguments
-    log_output = './output/logs/outstanding_product_info.csv'
-    output_dir = './output/raw_products_info'
+    log_output = args.log_output + "outstanding_products.csv"
+    output_dir = args.output_dir + "/products"
     num_retry = int(args.num_retry)
 
     cnt = 0
@@ -116,10 +104,12 @@ def get_outstanding_products():
         cnt += 1
         print("Retrying outstanding: {iter}".format(iter=cnt))
         # Scrape remaining profiles which failed previously
-        output_path = output_dir + "/product_info_outstanding.csv"
+        output_path = output_dir + "/products_outstanding.csv"
+
         cmd = 'scrapy runspider spiders/amazon_products.py -o {out_path} -a config="_,{log_output},_,_,outstanding"' \
             .format(out_path=output_path, log_output=log_output)
         call(cmd, shell=True)
+
         # Update those urls which are scraped or not
         updated_df = pd.read_csv(log_output)
         outstanding_df = updated_df.groupby('url').filter(lambda x: len(x) > 1)
@@ -131,28 +121,27 @@ def get_outstanding_products():
         updated_df.to_csv(log_output, index=False)
 
 
-# def scrape_cmd(output_path, curr_url, start_page, end_page, log_output, mode):
-#     cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{},{},{}"' \
-#         .format(output_path, curr_url, start_page, end_page, log_output, mode)
-#     call(cmd, shell=True)
-
-
 def get_profiles():
     """
     This function reads the scrape_profiles.csv and runs the amazon_product spider in batches
     """
-    path = args.file_path
-    profiles_path = path + "/scrape_profiles.csv"
+    input_data_path = args.file_path
+    profiles_path = input_data_path + "/scrape_profiles.csv"
+    log_output = args.log_output + "outstanding_profiles.csv"
+    output_dir = args.output_dir + "/profiles"
     profiles_df = pd.read_csv(profiles_path)
     freq = 200
     max_rows = profiles_df.shape[0] + 1
+
     for start_row in range(0, max_rows, freq):
         end_row = min(start_row + freq, max_rows)
 
-        # TODO: Use better naming convention or just stack it on same file
-        cmd = 'scrapy runspider spiders/amazon_profiles.py -o output/profiles/profiles_{time}_{s_row}_{e_row}.csv '\
-              '-a config="{profiles_path},output/logs/outstanding_profiles.csv,{s_row},{e_row},main"' \
-            .format(profiles_path=profiles_path, s_row=start_row, e_row=end_row, time=datetime.now().strftime("%H%M%S"))
+        output_path = output_dir + '/profiles_{time}_{s_row}_{e_row}.csv'\
+            .format(s_row=start_row, e_row=end_row, time=datetime.now().strftime("%H%M%S"))
+
+        cmd = 'scrapy runspider spiders/amazon_profiles.py -o {output_path} '\
+              '-a config="{profiles_path},{log_file},{s_row},{e_row},main"' \
+            .format(output_path=output_path, profiles_path=profiles_path, log_file=log_output, s_row=start_row, e_row=end_row, time=datetime.now().strftime("%H%M%S"))
         call(cmd, shell=True)
 
 
@@ -160,18 +149,22 @@ def get_products():
     """
     This function reads the scrape_products.csv and runs the amazon_product spider in batches
     """
-    path = args.file_path
-    products_path = path + "/scrape_products.csv"
+    input_data_path = args.file_path
+    products_path = input_data_path + "/scrape_products.csv"
+    log_output = args.log_output + "outstanding_products.csv"
+    output_dir = args.output_dir + "/products"
     products_df = pd.read_csv(products_path)
+
     freq = 200
     max_rows = products_df.shape[0] + 1
     for start_row in range(0, max_rows, freq):
         end_row = min(start_row + freq, max_rows)
+        output_path = output_dir + '/products_info_{time}_{s_row}_{e_row}.csv'\
+            .format(s_row=start_row, e_row=end_row, time=datetime.now().strftime("%H%M%S"))
 
-        # TODO: Use better naming convention or just stack it on same file
-        cmd = 'scrapy runspider spiders/amazon_products.py -o output/raw_products_info/products_info_{time}_{s_row}_{e_row}.csv '\
-              '-a config="{products_path},output/logs/outstanding_product_info.csv,{s_row},{e_row},main"' \
-            .format(products_path=products_path, s_row=start_row, e_row=end_row, time=datetime.now().strftime("%H%M%S"))
+        cmd = 'scrapy runspider spiders/amazon_products.py -o {output_path} '\
+              '-a config="{products_path}, {log_file},{s_row},{e_row},main"'\
+            .format(output_path=output_path, log_file=log_output, products_path=products_path, s_row=start_row, e_row=end_row)
         call(cmd, shell=True)
 
 
@@ -197,17 +190,17 @@ def get_profile_urls():
     This function creates the amazon urls for scraping profiles from the scraped reviews that are stored
     in the output/raw folder. 
     """
-    reviews_file_path = args.output_dir
-    path = args.file_path
-    profiles_path = path + "/scrape_profiles.csv"
+    reviews_file_path = args.final_output + "/reviews"
+    input_data_path = args.file_path
+    profiles_path = input_data_path + "/scrape_profiles.csv"
 
     # read all reviews in file path into one df
     all_files = glob.glob(os.path.join(reviews_file_path, "*.csv"))    # advisable to use os.path.join as this makes concatenation OS independent
     df_from_each_file = (pd.read_csv(f) for f in all_files)
     concatenated_df = pd.concat(df_from_each_file, ignore_index=True)
+
     # remove rows with empty profile links if it exists (profile that left the review might have been removed or deleted)
     concatenated_df = concatenated_df.dropna(subset=['profile_link'])
-
     # extract profile_links column from concatenated df
     profile_links = concatenated_df.profile_link.tolist()
     # remove duplicate profile links
@@ -256,25 +249,24 @@ if __name__ == "__main__":
 
     # Scrape reviews 
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    #get_reviews()
-    #get_outstanding_reviews()
-    combine_reviews(args.output_dir, args.final_output)
+    get_reviews()
+    get_outstanding_reviews()
+    combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
     # Scrape products
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    # get_products()
-    #     get_outstanding_products()
-    #     combine_products(args.output_dir, args.final_output)
+    get_products()
+    get_outstanding_products()
+    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
-    # # obtain profile urls from scraped reviews in raw
-    # get_profile_urls()
+
+    # Obtain profile urls from scraped reviews in raw
+    get_profile_urls()
 
     # Scrape profiles
-    # get_profiles()
-    # get_outstanding_profiles()
-    # combine_profiles('./output/profiles', './output/customers')
+    get_profiles()
+    get_outstanding_profiles()
+    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
 
-    # # TODO: Add arguments/config to allow changing of settings.py settings
+    # # TODO: Add arguments/config to allow changing of settings.py settings --> take in params from website
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions
-
-

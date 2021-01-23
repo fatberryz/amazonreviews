@@ -3,6 +3,7 @@
 import json
 import platform
 import re
+import time
 
 import pandas as pd
 
@@ -105,13 +106,13 @@ class AmazonReviewsSpider(scrapy.Spider):
             yield items
         try:
             account_num = response.url.split('amzn1.account.')[-1].split("/")[0]
-            print("account_num", account_num)
+            # print("account_num", account_num)
             pattern = r"window.CustomerProfileRootProps = {([^}]*)}"
-            print("pattern", pattern)
+            # print("pattern", pattern)
             token_pattern = r'"token":"((\\"|[^"])*)"'
-            print("response", response)
-            print("response xpath script text", response.xpath("//script//text()"))
-            print("response xpath", response.xpath("//script//text()").re(pattern))
+            # print("response", response)
+            # print("response xpath script text", response.xpath("//script//text()"))
+            # print("response xpath", response.xpath("//script//text()").re(pattern))
             reviews = response.xpath("//script//text()").re(pattern)[0]
             token = re.search(token_pattern, reviews).group(1)
 
@@ -135,6 +136,8 @@ class AmazonReviewsSpider(scrapy.Spider):
                 .format(acc_num=account_num, token=token)
 
             yield scrapy.FormRequest(next_url, callback=self.parse_profile, meta=meta)
+            # introduce random delay between requests to reduce risk of being blocked
+            time.sleep(random.randint(4, 8))
 
         except ValueError as e:
             if str(e) == "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters":
