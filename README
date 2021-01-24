@@ -13,23 +13,45 @@ then activate it using ```activate scrapevenv```
 4) Install environment ```conda env create -f environment.yml```. Alternatively, if using venv then ```pip install requirements.txt```
 
 # Usage
-### Product reviews
-1) Modify the file in ./data/scrape_urls.csv : fill in the  product url and total reviews seperated by a comma. e.g. ```https://www.amazon.com/LOreal-Paris-Visible-Line-Minimizing-Tone-Enhancing/product-reviews/B0000531SW/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber=,365```
-2) run ```python main.py -m reviews```
+1) Modify the file in './data/product_asin.csv' with amazon product ASINs. These ASINs will be used to generate the amazon links to be scraped
+2) run '''python main.py''' 
+- by default, it will automatically scrape reviews, products and profiles
 
-Raw reviews will be stored in ./output/raw in batches of default=15 pages (Do in batches so the proxies wont die halfway)
-Final product combined reviews stored in ./output/products
+** Config File ("config.yml") Parameters:
+file_path: default --> ./data : file path containing the csv files with the urls to scrape
+freq: default --> 15 : Number of pages to crawl before re-running the script to refresh proxies.
+output_dir: default --> ./output/raw : output directory for scraped items
+log_output: default --> ./output/logs/ : output directory for log files
+final_output: default -->  ./output/consolidated : output directory of combined scraped items
+num_retry: default --> 2 : Number of retries of scraping outstanding items"
+
+** Default flow when running 'python main.py' (adjust depending on your needs)
+
+Descrption of sequence of functions in main.py:
+X) function_name() --> what it does
+
+1) parse_args() -> read in the default arguments for the scraper from 'config.yml'
+2) create_urls() -> generate amazon product reviews + product information links to scrape ('./data/scrape_reviews' and './data/scrape_products.csv') 
+
+* Reviews
+3) get_reviews()  --> scrape product reviews based on the ASINs given - scrape all reviews and store in './output/raw/reviews' as csv files, 
+unsuccessful scrapes will be stored in the outstanding_reviews log file
+4) get_outstanding_reviews() --> scrape outstanding reviews from the log file
+5) combine_reviews() --> combine outstanding reviews and previously scraped reviews and stores it in './output/consolidated/consolidated_reviews.csv"
+TODO: Scrape reviews in batches of default=15 pages (Do in batches so the proxies wont die halfway)
+
+* Products
+6) get_products() -> scrape product information based on the ASINs given - scrape all product information and store in './output/raw/products' as csv files, 
+unsuccessful scrapes will be stored in the outstanding_products log file
+7) get_outstanding_products() -> scrape outstanding products from the log file
+8) combine_products() -> combine outstanding products and previously scraped products and stores it in './output/consolidated/consolidated_products.csv"
+
+* Profiles
+9) get_profile_urls() -> get deduplicated profile links from the consolidated reviews csv file 
+10) get_profiles() -> scrape profiles based on the ASINs given - scrape all profiles and store in './output/raw/profiles' as csv files, 
+unsuccessful scrapes will be stored in the outstanding_profiles log file
+11) get_outstanding_profiles() -> scrape outstanding profiles from the log file
+12) combine_profiles() -> combine outstanding profiles and previously scraped profiles and stores it in './output/consolidated/consolidated_profiles.csv"
 
 
-### Profiles
-1) Modify the url file in ./data/scrape_profiles.csv : fill in the links of the profiles e.g. ```https://www.amazon.com/gp/profile/amzn1.account.AEBGB5TXQVZDADM6NVF3PUGZJZQQ```
-2) run ```python main.py -m profiles```
-
-Raw reviews will be stored in ./output/profiles in batches of default=200 profiles (Do in batches so the proxies wont die halfway)
-Final product combined reviews stored in ./output/customers
-
-Outstanding reviews (Failed to scrape) will be stored in ./logs/outstanding_items.csv as logs.
-The script will then rescrape the items in this log until it succeeds (default tries=2). Adjust this paramter using ```-nr``` when running main.py
-
-```TODO: Add more usages/help on arguments/configuration```
 
