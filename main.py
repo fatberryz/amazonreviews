@@ -221,9 +221,6 @@ def parse_args():
     """
     p = configargparse.ArgumentParser(default_config_files=[
                                       './config.yml'], config_file_parser_class=configargparse.YAMLConfigFileParser)
-
-    p.add_argument("-m", "--scraping_mode",
-                   help="Specify mode of scraper ['reviews','profiles', 'products']")
     p.add_argument("-f", "--file_path",
                    help="Csv file that contains the review urls and no. reviews")
     p.add_argument("-n", "--freq", type=int,

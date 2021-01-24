@@ -3,6 +3,7 @@
 import platform
 import random
 import time
+from datetime import datetime
 
 import pandas as pd
 
@@ -72,6 +73,7 @@ class AmazonReviewsSpider(scrapy.Spider):
     # Defining a Scrapy parser
     def parse(self, response):
         items = AmazonReviewsItem()
+        date_scraped = datetime.today().strftime('%Y-%m-%d')
 
         data = response.css('#cm_cr-review_list')
         # Collecting user reviews
@@ -109,6 +111,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             items["voting"] = voting
             items["review_images"] = review_images
             items["ASIN"] = ASIN
+            items["date_scraped"] = date_scraped
 
             yield items
 

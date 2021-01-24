@@ -20,6 +20,7 @@ class AmazonReviewsItem(scrapy.Item):
     voting = scrapy.Field()
     review_images = scrapy.Field()
     ASIN = scrapy.Field()
+    date_scraped = scrapy.Field()
 
 
 class AmazonProfilesItem(scrapy.Item):
@@ -32,6 +33,7 @@ class AmazonProfilesItem(scrapy.Item):
     description = scrapy.Field()
     badges = scrapy.Field()
     ranking = scrapy.Field()
+    date_scraped = scrapy.Field()
 
 
 class AmazonProductsItem(scrapy.Item):
@@ -41,3 +43,4 @@ class AmazonProductsItem(scrapy.Item):
     price = scrapy.Field()
     rating = scrapy.Field()
     availability = scrapy.Field()
+    date_scraped = scrapy.Field()

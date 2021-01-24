@@ -4,6 +4,7 @@ import json
 import platform
 import re
 import time
+from datetime import datetime
 
 import pandas as pd
 
@@ -83,6 +84,7 @@ class AmazonReviewsSpider(scrapy.Spider):
     # Defining a Scrapy parser
     def parse(self, response):
         items = AmazonProfilesItem()
+        date_scraped = datetime.today().strftime('%Y-%m-%d')
 
         if response.status == 404:
             json_data = ''
@@ -93,6 +95,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             description = ''
             badges = ''
             ranking = ''
+            
 
             items["json_data"] = json_data
             items["acc_num"] = acc_num
@@ -102,6 +105,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             items["description"] = description
             items["badges"] = badges
             items["ranking"] = ranking
+            items["date_scraped"] = date_scraped
 
             yield items
         try:
@@ -159,6 +163,7 @@ class AmazonReviewsSpider(scrapy.Spider):
                 items["description"] = description
                 items["badges"] = badges
                 items["ranking"] = ranking
+                items["date_scraped"] = date_scraped
 
                 yield items
             else:
@@ -166,6 +171,8 @@ class AmazonReviewsSpider(scrapy.Spider):
 
     def parse_profile(self, response):
         items = AmazonProfilesItem()
+        date_scraped = datetime.today().strftime('%Y-%m-%d')
+
         try:
             data = json.loads(response.body)
             json_data = data
@@ -185,6 +192,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             items["description"] = description
             items["badges"] = badges
             items["ranking"] = ranking
+            items["date_scraped"] = date_scraped
 
             yield items
 
