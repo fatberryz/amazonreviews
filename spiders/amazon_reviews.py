@@ -6,16 +6,19 @@ import time
 from datetime import datetime
 
 import pandas as pd
-
 import scrapy
-from amazonreviews.items import AmazonReviewsItem
-from scrapy import signals
 
 # To allow Mac to load spider module from parent folder
 if platform.system() == "Darwin":
     import os, sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
+    from items import AmazonReviewsItem
+else:
+    from amazonreviews.items import AmazonReviewsItem
+
+from scrapy import signals
+
+
 
 # Creating a new class to implement Spider
 class AmazonReviewsSpider(scrapy.Spider):
@@ -84,7 +87,7 @@ class AmazonReviewsSpider(scrapy.Spider):
         for review in reviews:
             if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
                 stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
-            else: 
+            else:
                 stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
 
             profile_name =  ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()

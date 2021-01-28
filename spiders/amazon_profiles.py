@@ -10,7 +10,6 @@ import pandas as pd
 
 import js2xml
 import scrapy
-from amazonreviews.items import AmazonProfilesItem
 from js2xml.utils.vars import get_vars
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
@@ -20,7 +19,10 @@ from scrapy import signals
 if platform.system() == "Darwin":
     import os, sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
+    from items import AmazonProfilesItem
+else:
+    from amazonreviews.items import AmazonProfilesItem
+
 
 # Creating a new class to implement Spider
 class AmazonReviewsSpider(scrapy.Spider):
@@ -95,7 +97,7 @@ class AmazonReviewsSpider(scrapy.Spider):
             description = ''
             badges = ''
             ranking = ''
-            
+
 
             items["json_data"] = json_data
             items["acc_num"] = acc_num
