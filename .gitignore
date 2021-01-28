@@ -1,5 +1,5 @@
 *.csv
 *.pyc
-__pycache__/*.pyc
-output/consolidated/products/*.csv
-spiders/__pycache__/*.cpython-37.pyc
+__pycache__/*
+output/
+spiders/
