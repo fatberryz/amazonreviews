@@ -1,2 +1,5 @@
 *.csv
 *.pyc
+credential_file.json
+.vscode/settings.json
+*.ipynb
