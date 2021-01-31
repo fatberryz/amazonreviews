@@ -101,6 +101,9 @@ class AmazonReviewsSpider(scrapy.Spider):
             voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
             review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
             ASIN = response.request.url.split('/')[4]
+            # for URLs after the first page with the page numbers
+            if '?' in ASIN:
+                ASIN = ASIN.split('?')[0]
 
             items["stars"] = stars
             items["profile_name"] = profile_name
