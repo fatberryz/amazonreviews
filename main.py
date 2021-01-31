@@ -6,7 +6,7 @@ from subprocess import call
 import pandas as pd
 
 import configargparse
-from gcpFunctions import create_bq_client, upload_csv
+from gcpFunctions import create_bq_client, upload_csv_as_df
 from stitch import combine_products, combine_profiles, combine_reviews
 
 
@@ -226,21 +226,21 @@ def upload_consolidated_csvs(svc_account_credential_file_path, project_name, tar
     reviews_file_path = consolidated_dir + ("/reviews/consolidated_reviews.csv")
     # upload if file > 1kb
     if os.stat(reviews_file_path).st_size > 1000:
-        upload_csv(svc_account_credential_file_path, project_name, target_dataset, "reviews", reviews_file_path)
+        upload_csv_as_df(svc_account_credential_file_path, project_name, target_dataset, "reviews", reviews_file_path)
     else:
         print("There is no reviews in the consolidated file to be uploaded")
 
     ## upload products
     products_file_path = consolidated_dir + ("/products/consolidated_products.csv")
     if os.stat(products_file_path).st_size > 1000:
-        upload_csv(svc_account_credential_file_path, project_name, target_dataset, "products", products_file_path)
+        upload_csv_as_df(svc_account_credential_file_path, project_name, target_dataset, "products", products_file_path)
     else:
         print("There is no products in the consolidated file to be uploaded")
 
     ## upload profiles
     profiles_file_path = consolidated_dir + ("/profiles/consolidated_profiles.csv")
     if os.stat(profiles_file_path).st_size > 1000:
-        upload_csv(svc_account_credential_file_path, project_name, target_dataset, "profiles", profiles_file_path)
+        upload_csv_as_df(svc_account_credential_file_path, project_name, target_dataset, "profiles", profiles_file_path)
     else:
         print("There is no profiles in the consolidated file to be uploaded")
 
@@ -273,31 +273,32 @@ if __name__ == "__main__":
     # read arguments for scraper
     args = parse_args()
 
-    # create urls to scrape reviews and products from a csv containing product ASINs
-    create_urls()
+    # # create urls to scrape reviews and products from a csv containing product ASINs
+    # create_urls()
 
-    # Scrape reviews 
-    # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_reviews()
-    get_outstanding_reviews()
-    combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
+    # # Scrape reviews 
+    # # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_reviews()
+    # get_outstanding_reviews()
+    # combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
-    # Scrape products
-    # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_products()
-    get_outstanding_products()
-    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
+    # # Scrape products
+    # # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_products()
+    # get_outstanding_products()
+    # combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
+    # # Obtain profile urls from scraped reviews in raw
+    # get_profile_urls()
 
-    # Obtain profile urls from scraped reviews in raw
-    get_profile_urls()
-
-    # Scrape profiles
-    get_profiles()
-    get_outstanding_profiles()
-    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
+    # # Scrape profiles
+    # get_profiles()
+    # get_outstanding_profiles()
+    # combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
 
     upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
+
+    ## TODO: CLEAR ALL OUTPUT / INPUT FOLDERS after upload
 
     # # TODO: Add arguments/config to allow changing of settings.py settings --> take in params from website
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions

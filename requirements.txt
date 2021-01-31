@@ -7,3 +7,4 @@ scrapy_rotating_proxies==0.6.2
 configargparse==1.2.3
 pyYaml==5.3.1
 google-cloud-bigquery==2.7.0
+pyarrow==3.0.0
