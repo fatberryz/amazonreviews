@@ -3,4 +3,5 @@ freq: 15
 output_dir: ./output/raw
 log_output: ./output/logs/
 final_output: ./output/consolidated
+tracker_output: ./output/tracker/
 num_retry: 2
