@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 # Importing Scrapy Library
+import json
 import platform
 import random
 import time
 from datetime import datetime
 
 import pandas as pd
+
 import scrapy
+from datetime import datetime
+from scrapy import signals
 
 # To allow Mac to load spider module from parent folder
 if platform.system() == "Darwin":
@@ -15,10 +19,6 @@ if platform.system() == "Darwin":
     from items import AmazonReviewsItem
 else:
     from amazonreviews.items import AmazonReviewsItem
-
-from scrapy import signals
-
-
 
 # Creating a new class to implement Spider
 class AmazonReviewsSpider(scrapy.Spider):
@@ -33,6 +33,7 @@ class AmazonReviewsSpider(scrapy.Spider):
         self.log_output = config[1]
         mode = config[2]
         start_urls = []
+        self.tracker_path = config[3]
 
         if mode == "outstanding":
             outstanding_df = pd.read_csv(self.log_output)
@@ -82,58 +83,163 @@ class AmazonReviewsSpider(scrapy.Spider):
         # Collecting user reviews
         print("Current URL being scraped: \n\t", response.request.url)
         reviews = data.css('div[data-hook="review"]')
+        ASIN = response.request.url.split('/')[4]
+        # for URLs after the first page with the page numbers
+        if '?' in ASIN:
+            ASIN = ASIN.split('?')[0]
+        print(ASIN)
 
-        # Combining the results
-        for review in reviews:
-            if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
-                stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
+        # Boolean value to track if it should go to the next page or not
+        reached_old_reviews = False
+
+        # identify which product reviews have been scraped before 
+        with open(self.tracker_path, 'r') as reviews_file:
+            reviews_data = json.load(reviews_file)
+            print(reviews_data)
+
+            # if review has been scraped before, scrape new reviews, else scrape all reviews
+            if ASIN not in reviews_data:
+                # scrape all reviews
+                print(f"Product ASIN - {ASIN} has not been scraped before. Scraping all reviews")
+
+                # Combining the results
+                for review in reviews:
+                    if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
+                        stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
+                    else:
+                        stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
+
+                    profile_name = ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()
+                    profile_link = ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip()
+                    profile_image = ''.join(review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip()
+                    title = ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip()
+                    date =  ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip()
+                    style =  ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
+                    verified = ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip()
+                    comment =  ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
+                    voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
+                    review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
+                    # for URLs after the first page with the page numbers
+                    if '?' in ASIN:
+                        ASIN = ASIN.split('?')[0]
+
+                    items["stars"] = stars
+                    items["profile_name"] = profile_name
+                    items["profile_link"] = profile_link
+                    items["profile_image"] = profile_image
+                    items["title"] = title
+                    items["date"] = date
+                    items["style"] = style
+                    items["verified"] = verified
+                    items["comment"] = comment
+                    items["voting"] = voting
+                    items["review_images"] = review_images
+                    items["ASIN"] = ASIN
+                    items["date_scraped"] = date_scraped
+
+                    yield items
+
+                # next page url
+                next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
+
+                if next_page_partial_url and not reached_old_reviews:
+                    # remove name of product in front
+                    partial_url = str(next_page_partial_url).split("/product-reviews", 1)[1]
+                    # concat partial_url with base url for product reviews
+                    next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
+
+                    # continue following the next page link as long as there is content to scrape in the next page
+                    yield scrapy.Request(next_page_url, callback=self.parse)
+                    # introduce random delay between requests to reduce risk of being blocked
+                    time.sleep(random.randint(4, 8))
+                
+                elif next_page_partial_url and reached_old_reviews:
+                    print("Reached the point of old reviews. Stop scraping for current product review")
+                    with open(self.tracker_path, 'w') as reviews_file:
+                        reviews_data = json.load(reviews_file)
+                        reviews_data[ASIN] = date_scraped
+                        json.dump(reviews_data, reviews_file)
+
+                else:
+                    print("No more next review page button. Stop scraping for current product review")
+                    with open(self.tracker_path, 'w') as reviews_file:
+                        reviews_data = json.load(reviews_file)
+                        reviews_data[ASIN] = date_scraped
+                        json.dump(reviews_data, reviews_file)
             else:
-                stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
+                # product review has already been scraped before - scrape new reviews only
+                date_of_last_scraped = reviews_data[ASIN]
+                print(f"Product with ASIN {ASIN} has been scraped before on {date_of_last_scraped}")
 
-            profile_name =  ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()
-            profile_link = ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip()
-            profile_image =  ''.join(review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip()
-            title = ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip()
-            date =  ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip()
-            style =  ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
-            verified = ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip()
-            comment =  ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
-            voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
-            review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
-            ASIN = response.request.url.split('/')[4]
-            # for URLs after the first page with the page numbers
-            if '?' in ASIN:
-                ASIN = ASIN.split('?')[0]
+                # Combining the results
+                for review in reviews:
+                    date = ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip()
+                    review_date_string = date.split('on')[1]
+                    print(review_date_string)
+                    review_date = datetime.strptime(review_date_string, ' %B %d, %Y').strftime('%Y-%m-%d')
+                    # reached the page of old scraped reviews, stop scraping next pages
+                    if review_date < date_of_last_scraped:
+                        reached_old_reviews = True
+                    else:
+                        # have not reached old scraped page reviews, continue scraping
+                        if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
+                            stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
+                        else:
+                            stars = ''.join(review.xpath('.//i[@data-hook="cmps-review-star-rating"]//text()').extract()).strip()
+                        profile_name =  ''.join(review.xpath('.//span[@class="a-profile-name"]//text()').extract()).strip()
+                        profile_link = ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip()
+                        profile_image = ''.join(review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip()
+                        title = ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip()
+                        style =  ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
+                        verified = ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip()
+                        comment =  ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
+                        voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
+                        review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
+                        # for URLs after the first page with the page numbers
+                        if '?' in ASIN:
+                            ASIN = ASIN.split('?')[0]
 
-            items["stars"] = stars
-            items["profile_name"] = profile_name
-            items["profile_link"] = profile_link
-            items["profile_image"] = profile_image
-            items["title"] = title
-            items["date"] = date
-            items["style"] = style
-            items["verified"] = verified
-            items["comment"] = comment
-            items["voting"] = voting
-            items["review_images"] = review_images
-            items["ASIN"] = ASIN
-            items["date_scraped"] = date_scraped
+                        items["stars"] = stars
+                        items["profile_name"] = profile_name
+                        items["profile_link"] = profile_link
+                        items["profile_image"] = profile_image
+                        items["title"] = title
+                        items["date"] = date
+                        items["style"] = style
+                        items["verified"] = verified
+                        items["comment"] = comment
+                        items["voting"] = voting
+                        items["review_images"] = review_images
+                        items["ASIN"] = ASIN
+                        items["date_scraped"] = date_scraped
 
-            yield items
+                        yield items
 
-        # next page url
-        next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
+                # next page url
+                next_page_partial_url = response.xpath('//li[@class="a-last"]/a/@href').extract_first()
 
-        if next_page_partial_url:
-            # remove name of product in front
-            partial_url = str(next_page_partial_url).split("/product-reviews", 1)[1]
-            # concat partial_url with base url for product reviews
-            next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
+                if next_page_partial_url and not reached_old_reviews:
+                    # remove name of product in front
+                    partial_url = str(next_page_partial_url).split("/product-reviews", 1)[1]
+                    # concat partial_url with base url for product reviews
+                    next_page_url = "https://www.amazon.com/product-reviews" + str(partial_url)
 
-            # continue following the next page link as long as there is content to scrape in the next page
-            yield scrapy.Request(next_page_url, callback=self.parse)
-            # introduce random delay between requests to reduce risk of being blocked
-            time.sleep(random.randint(4, 8))
+                    # continue following the next page link as long as there is content to scrape in the next page
+                    yield scrapy.Request(next_page_url, callback=self.parse)
+                    # introduce random delay between requests to reduce risk of being blocked
+                    time.sleep(random.randint(4, 8))
+                
+                elif next_page_partial_url and reached_old_reviews:
+                    print("Reached the point of old reviews. Stop scraping for current product review")
+                    with open(self.tracker_path, 'w') as reviews_file:
+                        reviews_data = json.load(reviews_file)
+                        reviews_data[ASIN] = date_scraped
+                        json.dump(reviews_data, reviews_file)                   
+                    
+                else:
+                    print("No more next review page button. Stop scraping for current product review")
+                    with open(self.tracker_path, 'w') as reviews_file:
+                        reviews_data = json.load(reviews_file)
+                        reviews_data[ASIN] = date_scraped
+                        json.dump(reviews_data, reviews_file)
 
-        else:
-            print(f"No more next review page button. Stop scraping for current product review")
