@@ -18,6 +18,8 @@ def get_reviews():
     file_path = input_data_path + "/scrape_reviews.csv"
     output_dir = args.output_dir + "/reviews"
     log_output = args.log_output + 'outstanding_reviews.csv'
+    tracker_dir = args.tracker_output
+    tracker_path = tracker_dir + 'reviews_tracker.json'
 
     url_df = pd.read_csv(file_path)
     for ind, row in url_df.iterrows():
@@ -26,7 +28,7 @@ def get_reviews():
         
         output_path = output_dir + "/reviews_{}.csv".format(curr_asin)
 
-        cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, curr_url, log_output, "main")
+        cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{},{}"'.format(output_path, curr_url, log_output, "main", tracker_path)
         call(cmd, shell=True)
         
 
@@ -38,6 +40,8 @@ def get_outstanding_reviews():
     log_output = args.log_output + "outstanding_reviews.csv"
     output_dir = args.output_dir + "/reviews"
     num_retry = int(args.num_retry)
+    tracker_dir = args.tracker_output
+    tracker_path = tracker_dir + 'reviews_tracker.json'
 
     cnt = 0
     while cnt < num_retry:
@@ -46,7 +50,7 @@ def get_outstanding_reviews():
         # Scrape remaining urls which failed previously
         output_path = output_dir + "/reviews_outstanding.csv"
 
-        cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{}"'.format(output_path, "NA", log_output, "outstanding")
+        cmd = 'scrapy runspider spiders/amazon_reviews.py -o {} -a config="{},{},{},{}"'.format(output_path, "NA", log_output, "outstanding", tracker_path)
         call(cmd, shell=True)
 
         # Update those urls which are scraped or not (0 or 1 in scraped column)
@@ -243,6 +247,7 @@ def upload_consolidated_csvs(svc_account_credential_file_path, project_name, tar
         upload_csv_as_df(svc_account_credential_file_path, project_name, target_dataset, "profiles", profiles_file_path)
     else:
         print("There is no profiles in the consolidated file to be uploaded")
+        
 
 def parse_args():
     # TODO: Save logs/cmd line outputs in a file
@@ -265,6 +270,8 @@ def parse_args():
                    help="Output directory of final scraped products (After stitching)")
     p.add_argument("-nr", "--num_retry",
                    help="Number of retries of scraping outstanding items")
+    p.add_argument("-td", "--tracker_output",
+                help="Output directory for tracker json file for scraped items")
 
     return p.parse_args()
 
@@ -279,25 +286,25 @@ if __name__ == "__main__":
     # Scrape reviews 
     # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
     get_reviews()
-    get_outstanding_reviews()
-    combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
+    # get_outstanding_reviews()
+    # combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
-    #  Scrape products
-    #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_products()
-    get_outstanding_products()
-    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
+    # #  Scrape products
+    # #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_products()
+    # get_outstanding_products()
+    # combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
-    # Obtain profile urls from scraped reviews in raw
-    get_profile_urls()
+    # # Obtain profile urls from scraped reviews in raw
+    # get_profile_urls()
 
-    # Scrape profiles
-    get_profiles()
-    get_outstanding_profiles()
-    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
+    # # Scrape profiles
+    # get_profiles()
+    # get_outstanding_profiles()
+    # combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
     
-    # Upload consolidated CSVs into GBQ
-    upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
+    # # Upload consolidated CSVs into GBQ
+    # upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
 
     ## TODO: CLEAR ALL OUTPUT / INPUT FOLDERS after upload
 
