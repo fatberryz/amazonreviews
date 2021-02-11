@@ -11,6 +11,7 @@ import pandas as pd
 import scrapy
 from datetime import datetime
 from scrapy import signals
+from scrapy.exceptions import CloseSpider
 
 # To allow Mac to load spider module from parent folder
 if platform.system() == "Darwin":
@@ -93,13 +94,13 @@ class AmazonReviewsSpider(scrapy.Spider):
         reached_old_reviews = False
 
         # identify which product reviews have been scraped before 
-        with open(self.tracker_path, 'r') as reviews_file:
+        with open(self.tracker_path, 'r+') as reviews_file:
             reviews_data = json.load(reviews_file)
-            print(reviews_data)
+            #print(reviews_data)
 
             # if review has been scraped before, scrape new reviews, else scrape all reviews
             if ASIN not in reviews_data:
-                # scrape all reviews
+                # Product has not been scraped before - scrape all reviews
                 print(f"Product ASIN - {ASIN} has not been scraped before. Scraping all reviews")
 
                 # Combining the results
@@ -155,17 +156,17 @@ class AmazonReviewsSpider(scrapy.Spider):
                 
                 elif next_page_partial_url and reached_old_reviews:
                     print("Reached the point of old reviews. Stop scraping for current product review")
+                    reviews_data[ASIN] = date_scraped
                     with open(self.tracker_path, 'w') as reviews_file:
-                        reviews_data = json.load(reviews_file)
-                        reviews_data[ASIN] = date_scraped
                         json.dump(reviews_data, reviews_file)
+                    raise CloseSpider('termination condition met') 
 
                 else:
                     print("No more next review page button. Stop scraping for current product review")
+                    reviews_data[ASIN] = date_scraped
                     with open(self.tracker_path, 'w') as reviews_file:
-                        reviews_data = json.load(reviews_file)
-                        reviews_data[ASIN] = date_scraped
                         json.dump(reviews_data, reviews_file)
+                    raise CloseSpider('termination condition met') 
             else:
                 # product review has already been scraped before - scrape new reviews only
                 date_of_last_scraped = reviews_data[ASIN]
@@ -175,13 +176,12 @@ class AmazonReviewsSpider(scrapy.Spider):
                 for review in reviews:
                     date = ''.join(review.xpath('.//span[@data-hook="review-date"]//text()').extract()).strip()
                     review_date_string = date.split('on')[1]
-                    print(review_date_string)
                     review_date = datetime.strptime(review_date_string, ' %B %d, %Y').strftime('%Y-%m-%d')
                     # reached the page of old scraped reviews, stop scraping next pages
                     if review_date < date_of_last_scraped:
                         reached_old_reviews = True
                     else:
-                        # have not reached old scraped page reviews, continue scraping
+                        # have not reached old scraped page reviews, continue scraping next page
                         if ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip() != '':
                             stars = ''.join(review.xpath('.//i[@data-hook="review-star-rating"]//text()').extract()).strip()
                         else:
@@ -190,9 +190,9 @@ class AmazonReviewsSpider(scrapy.Spider):
                         profile_link = ''.join(review.xpath('.//div[@data-hook="genome-widget"]//a/@href').extract()).strip()
                         profile_image = ''.join(review.xpath('.//div[@class="a-profile-avatar"]//img/@data-src').extract()).strip()
                         title = ''.join(review.xpath('.//a[@data-hook="review-title"]//text()').extract()).strip()
-                        style =  ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
+                        style = ''.join(review.xpath('.//a[@data-hook="format-strip"]//text()').extract()).strip()
                         verified = ''.join(review.xpath('.//span[@data-hook="avp-badge"]//text()').extract()).strip()
-                        comment =  ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
+                        comment = ''.join(review.xpath('.//span[@data-hook="review-body"]//text()').extract()).strip()
                         voting = ''.join(review.xpath('.//span[@data-hook="review-voting-widget"]//text()').extract()).strip()
                         review_images = len(review.xpath('.//div[@class="review-image-tile-section"]//img'))
                         # for URLs after the first page with the page numbers
@@ -231,15 +231,17 @@ class AmazonReviewsSpider(scrapy.Spider):
                 
                 elif next_page_partial_url and reached_old_reviews:
                     print("Reached the point of old reviews. Stop scraping for current product review")
+                    #print("loaded reviews data", reviews_data)
+                    reviews_data[ASIN] = date_scraped
+                    #print("updated reviews data", reviews_data)
                     with open(self.tracker_path, 'w') as reviews_file:
-                        reviews_data = json.load(reviews_file)
-                        reviews_data[ASIN] = date_scraped
-                        json.dump(reviews_data, reviews_file)                   
+                        json.dump(reviews_data, reviews_file)
+                    raise CloseSpider('termination condition met')              
                     
                 else:
                     print("No more next review page button. Stop scraping for current product review")
+                    reviews_data[ASIN] = date_scraped
                     with open(self.tracker_path, 'w') as reviews_file:
-                        reviews_data = json.load(reviews_file)
-                        reviews_data[ASIN] = date_scraped
                         json.dump(reviews_data, reviews_file)
+                    raise CloseSpider('termination condition met')     
 
