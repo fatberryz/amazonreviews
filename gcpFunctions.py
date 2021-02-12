@@ -74,22 +74,18 @@ def upload_csv_as_df(service_account_credential_path, project_name, target_datas
 		# change data types to suit GBQ table schema
 		df['date_scraped'] = pd.to_datetime(df['date_scraped'])
 		job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-		# Make an API request to get current number of rows/cols in table
-		table = client.get_table(table_id)
-		print("Loaded {} rows and {} columns to {}".format(table.num_rows, len(table.schema), table_id))
 		# Wait for the load job to complete
-		return job.result()
+		job.result()
+		print(f"Loaded {job.output_rows} rows into {item_type} table")
 
 	if item_type == "products":
 		df = pd.read_csv(csv_file_path)
 		# change data types to suit GBQ table schema
 		df['date_scraped'] = pd.to_datetime(df['date_scraped'])
 		job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-		# Make an API request to get current number of rows/cols in table
-		table = client.get_table(table_id)
-		print("Loaded {} rows and {} columns to {}".format(table.num_rows, len(table.schema), table_id))
 		# Wait for the load job to complete
-		return job.result()
+		job.result()
+		print(f"Loaded {job.output_rows} rows into {item_type} table")
 
 	if item_type == "profiles":
 		df = pd.read_csv(csv_file_path)
@@ -97,8 +93,6 @@ def upload_csv_as_df(service_account_credential_path, project_name, target_datas
 		df['date_scraped'] = pd.to_datetime(df['date_scraped'])
 		df['ranking'] = df['ranking'].str.replace(',', '').astype(int)
 		job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-		# Make an API request to get current number of rows/cols in table
-		table = client.get_table(table_id)
-		print("Loaded {} rows and {} columns to {}".format(table.num_rows, len(table.schema), table_id))
 		# Wait for the load job to complete
-		return job.result()
+		job.result()
+		print(f"Loaded {job.output_rows} rows into {item_type} table")
