@@ -1,3 +1,4 @@
+import csv
 import glob
 import os
 from datetime import datetime
@@ -247,6 +248,31 @@ def upload_consolidated_csvs(svc_account_credential_file_path, project_name, tar
         upload_csv_as_df(svc_account_credential_file_path, project_name, target_dataset, "profiles", profiles_file_path)
     else:
         print("There is no profiles in the consolidated file to be uploaded")
+
+def clear_output_folders():
+    """
+    This function helps to clear all the output folders of the csv files and then recreates the outstanding item files
+    in the log folder with the headers - 'url', 'num_items' and 'scraped'
+    """
+    # remove csv files in output folder and its sub-folders recursively
+    files = glob.glob('./output/**/*.csv', recursive=True)
+    for f in files:
+        try:
+            os.remove(f)
+        except OSError as e:
+            print("Error: %s : %s" % (f, e.strerror))
+    print("csv files in output folder have been removed")
+
+    # recreate csv files in log folder
+    file_path = args.log_output
+    file_names = ['outstanding_reviews.csv','outstanding_profiles.csv','outstanding_products.csv']
+    for fn in file_names:
+        csv_name = file_path + fn
+        with open(csv_name, 'w') as csvfile:
+            fieldnames = ['url', 'num_items', 'scraped']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+    print(f"log files with headers have been created in {file_path} folder")
         
 
 def parse_args():
@@ -283,30 +309,31 @@ if __name__ == "__main__":
     # create urls to scrape reviews and products from a csv containing product ASINs
     create_urls()
 
-    # Scrape reviews 
-    # TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    #Scrape reviews 
+    #TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
     get_reviews()
-    # get_outstanding_reviews()
-    # combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
+    get_outstanding_reviews()
+    combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
-    # #  Scrape products
-    # #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    # get_products()
-    # get_outstanding_products()
-    # combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
+    #  Scrape products
+    #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    get_products()
+    get_outstanding_products()
+    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
-    # # Obtain profile urls from scraped reviews in raw
-    # get_profile_urls()
+    # Obtain profile urls from scraped reviews in raw
+    get_profile_urls()
 
-    # # Scrape profiles
-    # get_profiles()
-    # get_outstanding_profiles()
-    # combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
+    # Scrape profiles
+    get_profiles()
+    get_outstanding_profiles()
+    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
     
-    # # Upload consolidated CSVs into GBQ
-    # upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
+    # Upload consolidated CSVs into GBQ
+    upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
 
-    ## TODO: CLEAR ALL OUTPUT / INPUT FOLDERS after upload
+    # Clear output
+    clear_output_folders()
 
     # # TODO: Add arguments/config to allow changing of settings.py settings --> take in params from website
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions
