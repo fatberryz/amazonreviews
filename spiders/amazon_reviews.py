@@ -14,7 +14,7 @@ from scrapy import signals
 from scrapy.exceptions import CloseSpider
 
 # To allow Mac to load spider module from parent folder
-if platform.system() == "Darwin":
+if platform.system() == "Darwin" or platform.system() == "Linux":
     import os, sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from items import AmazonReviewsItem

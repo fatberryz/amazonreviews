@@ -17,7 +17,7 @@ from random_user_agent.user_agent import UserAgent
 from scrapy import signals
 
 # To allow Mac to load spider module from parent folder
-if platform.system() == "Darwin":
+if platform.system() == "Darwin" or platform.system() == "Linux":
     import os, sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from items import AmazonProductsItem
