@@ -7,7 +7,7 @@ from subprocess import call
 import pandas as pd
 
 import configargparse
-from gcpFunctions import create_bq_client, upload_csv_as_df
+from gcpFunctions import create_bq_client, upload_csv_as_df, upload_cleaned_data
 from stitch import combine_products, combine_profiles, combine_reviews
 
 
@@ -310,7 +310,9 @@ def parse_args():
     p.add_argument("-nr", "--num_retry",
                    help="Number of retries of scraping outstanding items")
     p.add_argument("-td", "--tracker_output",
-                help="Output directory for tracker json file for scraped items")
+                   help="Output directory for tracker json file for scraped items")
+    p.add_argument("-co", "--cleaned_output",
+                    help="Output directory for cleaned items to be uploaded into GBQ")
 
     return p.parse_args()
 
@@ -319,34 +321,37 @@ if __name__ == "__main__":
     # read arguments for scraper
     args = parse_args()
 
-    # create urls to scrape reviews and products from a csv containing product ASINs
-    create_urls()
+    # # create urls to scrape reviews and products from a csv containing product ASINs
+    # create_urls()
 
-    #Scrape reviews 
-    #TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_reviews()
-    get_outstanding_reviews()
-    combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
+    # #Scrape reviews 
+    # #TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_reviews()
+    # get_outstanding_reviews()
+    # combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
-    #  Scrape products
-    #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_products()
-    get_outstanding_products()
-    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
+    # #  Scrape products
+    # #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_products()
+    # get_outstanding_products()
+    # combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
-    # Obtain profile urls from scraped reviews in raw
-    get_profile_urls()
+    # # Obtain profile urls from scraped reviews in raw
+    # get_profile_urls()
 
-    # Scrape profiles
-    get_profiles()
-    get_outstanding_profiles()
-    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
+    # # Scrape profiles
+    # get_profiles()
+    # get_outstanding_profiles()
+    # combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
     
-    #Upload consolidated CSVs into GBQ
-    upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
+    # #Upload consolidated CSVs into GBQ
+    # upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
 
-    # Clear output
-    clear_output_folders()
+    # # Clear output
+    # clear_output_folders()
+
+    # Upload Cleaned Data (cleaned raw data + UC2/3 outputs)
+    upload_cleaned_data('./credential_file.json', 'crafty-chiller-276910', 'cleaned_items', 'reviews', (args.cleaned_output + 'reviews_B0014ZWHZQ.csv'))
 
     # # TODO: Add arguments/config to allow changing of settings.py settings --> take in params from website
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions

@@ -4,4 +4,5 @@ output_dir: ./output/raw
 log_output: ./output/logs/
 final_output: ./output/consolidated
 tracker_output: ./output/tracker/
+cleaned_output: ./output/cleaned_data/
 num_retry: 2
