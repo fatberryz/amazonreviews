@@ -179,16 +179,17 @@ def create_urls():
     This function creates the amazon urls for scraping reviews and products from a csv containing
     amazon product ASINs.
     """
-    asin_file_path = "./data/product_asin.csv"
+    data_basepath = args.file_path 
+    asin_file_path = data_basepath  + "/product_asin.csv"
     asin_df = pd.read_csv(asin_file_path, header=0)
     asins = asin_df.asin.tolist()
     product_urls = [f"https://www.amazon.com/dp/{asin}" for asin in asins]
     review_urls = [
         f"https://www.amazon.com/product-reviews/{asin}/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&sortBy=recent" for asin in asins]
     product_df = pd.DataFrame(product_urls, columns=["url"])
-    product_df.to_csv('./data/scrape_products.csv', index=False)
+    product_df.to_csv( data_basepath + '/scrape_products.csv', index=False)
     review_df = pd.DataFrame(review_urls, columns=["url"])
-    review_df.to_csv('./data/scrape_reviews.csv', index=False)
+    review_df.to_csv(data_basepath + '/scrape_reviews.csv', index=False)
 
 
 def get_profile_urls():
