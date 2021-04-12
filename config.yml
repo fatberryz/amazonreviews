@@ -1,7 +1,7 @@
-file_path: ./data
+file_path: ../webscrap-website/amazonreviews/data
 freq: 15
-output_dir: ./output/raw
-log_output: ./output/logs/
-final_output: ./output/consolidated
-tracker_output: ./output/tracker/
+output_dir: ../webscrap-website/amazonreviews/output/raw
+log_output: ../webscrap-website/amazonreviews/output/logs/
+final_output: ../webscrap-website/amazonreviews/output/consolidated
+tracker_output: ../webscrap-website/amazonreviews/output/tracker/
 num_retry: 2

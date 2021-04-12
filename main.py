@@ -1,12 +1,13 @@
 import csv
 import glob
+import json
 import os
 from datetime import datetime
 from subprocess import call
 
+import configargparse
 import pandas as pd
 
-import configargparse
 from gcpFunctions import create_bq_client, upload_csv_as_df
 from stitch import combine_products, combine_profiles, combine_reviews
 
@@ -287,6 +288,32 @@ def clear_output_folders():
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
     print(f"log files with headers have been created in {file_path} folder")
+
+# Update counter of web scrape tool each time it is activated (queue 1 with get_review_profile)
+def update_counter_file():
+    # get current date
+    current_date = datetime.today().strftime('%Y-%m-%d')
+
+    # load json counter file to read/write to
+    with open('../webscrap-website/dashboard_data/webscrape_counter.json', 'r+') as infile:
+        # load current file unless it is empty which causes the jsondecode error
+        try:
+            current_counts = json.load(infile)
+            print("JSON WEBSCRAPE COUNTER FILE LOADED SUCCESSFULLY", current_counts)
+            if current_date in current_counts:
+                current_counts[f'{current_date}'] += 1
+            else:
+                current_counts[f'{current_date}'] = 1
+        except ValueError: #catches json decode error
+            # initialize the first time when the json counter file is empty
+            print("JSON WEBSCRAPE COUNTER FILE NOT LOADED DUE TO VALUE ERROR")
+            current_counts = {}
+            current_counts[f'{current_date}'] = 1
+        with open('../webscrap-website/dashboard_data/webscrape_counter.json', 'w') as outfile:
+            # write updated count to counter file
+            json.dump(current_counts, outfile)
+            infile.close()
+            outfile.close()
         
 
 def parse_args():
@@ -320,8 +347,8 @@ if __name__ == "__main__":
     # read arguments for scraper
     args = parse_args()
 
-    # create urls to scrape reviews and products from a csv containing product ASINs
-    create_urls()
+    # # create urls to scrape reviews and products from a csv containing product ASINs
+    # create_urls()
 
     #Scrape reviews 
     #TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
@@ -329,25 +356,28 @@ if __name__ == "__main__":
     get_outstanding_reviews()
     combine_reviews((args.output_dir + '/reviews'), (args.final_output + '/reviews'))
 
-    #  Scrape products
-    #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
-    get_products()
-    get_outstanding_products()
-    combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
+    # #  Scrape products
+    # #  TODO: Update to include rotation for googlebots2.1 in the useragents (See documentation)
+    # get_products()
+    # get_outstanding_products()
+    # combine_products((args.output_dir + '/products'), (args.final_output + '/products'))
 
-    # Obtain profile urls from scraped reviews in raw
-    get_profile_urls()
+    # # Obtain profile urls from scraped reviews in raw
+    # get_profile_urls()
 
-    # Scrape profiles
-    get_profiles()
-    get_outstanding_profiles()
-    combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
+    # # Scrape profiles
+    # get_profiles()
+    # get_outstanding_profiles()
+    # combine_profiles((args.output_dir + '/profiles'), (args.final_output + '/profiles'))
     
-    #Upload consolidated CSVs into GBQ
-    upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
+    # #Upload consolidated CSVs into GBQ
+    # upload_consolidated_csvs('./credential_file.json', 'crafty-chiller-276910', 'scraped_items_test' )
 
-    # Clear output
-    clear_output_folders()
+    # # Clear output
+    # clear_output_folders()
+
+    # update webscrape counter file im webscrap-website repo 
+    update_counter_file()
 
     # # TODO: Add arguments/config to allow changing of settings.py settings --> take in params from website
     # # TODO: Update readme to include usage examples, parameter explanation and installation instructions
